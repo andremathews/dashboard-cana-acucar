@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Cana-de-Açúcar - AgroTech</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        header { text-align: center; margin-bottom: 40px; padding: 20px; }
+        header h1 { font-size: 2.5em; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        header p { font-size: 1.1em; opacity: 0.9; }
+        .kpi-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        .kpi-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+        }
+        .kpi-card:hover { transform: translateY(-5px); }
+        .kpi-value { font-size: 2.5em; font-weight: bold; color: #4CAF50; margin: 10px 0; }
+        .kpi-label { font-size: 0.9em; opacity: 0.8; text-transform: uppercase; }
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .chart-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            color: #333;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        .chart-card h3 { margin-bottom: 20px; color: #1e3c72; font-size: 1.3em; }
+        .filter-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .filter-container label { margin-right: 10px; font-weight: bold; }
+        .filter-container select {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-size: 1em;
+            cursor: pointer;
+            background: #fff;
+            color: #333;
+        }
+        .table-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            color: #333;
+            overflow-x: auto;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; font-weight: bold; }
+        tr:hover { background-color: #f5f5f5; }
+        .highlight { background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); color: white; padding: 3px 8px; border-radius: 5px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌾 Dashboard de Cana-de-Açúcar</h1>
+            <p>Análise de Produtividade e Qualidade por Talhão</p>
+        </header>
+        <div class="filter-container">
+            <label for="variedadeFilter">📊 Filtrar por Variedade:</label>
+            <select id="variedadeFilter" onchange="filtrarDados()">
+                <option value="todas">Todas as Variedades</option>
+                <option value="RB867515">RB867515</option>
+                <option value="CTC9">CTC9</option>
+                <option value="SP80-3280">SP80-3280</option>
+            </select>
+        </div>
+        <div class="kpi-container">
+            <div class="kpi-card">
+                <div class="kpi-label">Produtividade Média</div>
+                <div class="kpi-value" id="kpiProdutividade">87.26</div>
+                <div>ton/ha</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">ATR Médio</div>
+                <div class="kpi-value" id="kpiATR">144.2</div>
+                <div>kg/t</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Área Total</div>
+                <div class="kpi-value" id="kpiArea">116.3</div>
+                <div>hectares</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Total de Talhões</div>
+                <div class="kpi-value" id="kpiTalhaos">10</div>
+                <div>unidades</div>
+            </div>
+        </div>
+        <div class="charts-container">
+            <div class="chart-card">
+                <h3>📈 Produtividade por Talhão</h3>
+                <canvas id="chartProdutividade"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>🎯 ATR por Variedade</h3>
+                <canvas id="chartATR"></canvas>
+            </div>
+        </div>
+        <div class="charts-container">
+            <div class="chart-card">
+                <h3>🌧️ Chuva vs Produtividade</h3>
+                <canvas id="chartChuva"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>📊 Distribuição por Variedade</h3>
+                <canvas id="chartVariedade"></canvas>
+            </div>
+        </div>
+        <div class="table-container">
+            <h3>📋 Dados Detalhados por Talhão</h3>
+            <table id="tabelaDados">
+                <thead>
+                    <tr>
+                        <th>Talhão</th>
+                        <th>Variedade</th>
+                        <th>Área (ha)</th>
+                        <th>Produtividade (t/ha)</th>
+                        <th>Chuva (mm)</th>
+                        <th>ATR (kg/t)</th>
+                        <th>Data Colheita</th>
+                    </tr>
+                </thead>
+                <tbody id="tabelaBody"></tbody>
+            </table>
+        </div>
+    </div>
+    <script>
+        const dadosCompletos = [
+            { talhao: 'T01', variedade: 'RB867515', area: 12.5, produtividade: 85.2, chuva: 1250, atr: 142, data: '15/04/2024' },
+            { talhao: 'T02', variedade: 'CTC9', area: 8.3, produtividade: 92.1, chuva: 1180, atr: 148, data: '18/04/2024' },
+            { talhao: 'T03', variedade: 'RB867515', area: 15.0, produtividade: 78.5, chuva: 1320, atr: 138, data: '12/04/2024' },
+            { talhao: 'T04', variedade: 'SP80-3280', area: 10.2, produtividade: 88.7, chuva: 1210, atr: 145, data: '20/04/2024' },
+            { talhao: 'T05', variedade: 'CTC9', area: 6.8, produtividade: 95.3, chuva: 1150, atr: 151, data: '14/04/2024' },
+            { talhao: 'T06', variedade: 'RB867515', area: 20.1, produtividade: 81.4, chuva: 1290, atr: 140, data: '16/04/2024' },
+            { talhao: 'T07', variedade: 'SP80-3280', area: 9.5, produtividade: 90.2, chuva: 1200, atr: 146, data: '13/04/2024' },
+            { talhao: 'T08', variedade: 'CTC9', area: 11.7, produtividade: 87.9, chuva: 1230, atr: 144, data: '19/04/2024' },
+            { talhao: 'T09', variedade: 'RB867515', area: 14.3, produtividade: 79.8, chuva: 1310, atr: 139, data: '17/04/2024' },
+            { talhao: 'T10', variedade: 'SP80-3280', area: 7.9, produtividade: 93.5, chuva: 1170, atr: 149, data: '15/04/2024' }
+        ];
+        let dadosFiltrados = [...dadosCompletos];
+        let chartProdutividade, chartATR, chartChuva, chartVariedade;
+        window.onload = function() { inicializarGraficos(); atualizarDashboard(); };
+        function filtrarDados() {
+            const filtro = document.getElementById('variedadeFilter').value;
+            if (filtro === 'todas') { dadosFiltrados = [...dadosCompletos]; }
+            else { dadosFiltrados = dadosCompletos.filter(d => d.variedade === filtro); }
+            atualizarDashboard();
+        }
+        function atualizarDashboard() { atualizarKPIs(); atualizarGraficos(); atualizarTabela(); }
+        function atualizarKPIs() {
+            const mediaProdutividade = dadosFiltrados.reduce((sum, d) => sum + d.produtividade, 0) / dadosFiltrados.length;
+            const mediaATR = dadosFiltrados.reduce((sum, d) => sum + d.atr, 0) / dadosFiltrados.length;
+            const totalArea = dadosFiltrados.reduce((sum, d) => sum + d.area, 0);
+            document.getElementById('kpiProdutividade').textContent = mediaProdutividade.toFixed(2);
+            document.getElementById('kpiATR').textContent = mediaATR.toFixed(1);
+            document.getElementById('kpiArea').textContent = totalArea.toFixed(1);
+            document.getElementById('kpiTalhaos').textContent = dadosFiltrados.length;
+        }
+        function inicializarGraficos() {
+            Chart.defaults.color = '#333';
+            Chart.defaults.borderColor = 'rgba(0,0,0,0.1)';
+            const ctxProd = document.getElementById('chartProdutividade').getContext('2d');
+            chartProdutividade = new Chart(ctxProd, {
+                type: 'bar',
+                data: { labels: [], datasets: [{ label: 'Produtividade (t/ha)', data: [], backgroundColor: 'rgba(30, 60, 114, 0.8)', borderColor: 'rgba(30, 60, 114, 1)', borderWidth: 1 }] },
+                options: { responsive: true, scales: { y: { beginAtZero: true } } }
+            });
+            const ctxATR = document.getElementById('chartATR').getContext('2d');
+            chartATR = new Chart(ctxATR, {
+                type: 'bar',
+                data: { labels: [], datasets: [{ label: 'ATR Médio (kg/t)', data: [], backgroundColor: ['rgba(76, 175, 80, 0.8)', 'rgba(33, 150, 243, 0.8)', 'rgba(255, 152, 0, 0.8)'], borderColor: ['rgba(76, 175, 80, 1)', 'rgba(33, 150, 243, 1)', 'rgba(255, 152, 0, 1)'], borderWidth: 1 }] },
+                options: { responsive: true, scales: { y: { beginAtZero: false, min: 130 } } }
+            });
+            const ctxChuva = document.getElementById('chartChuva').getContext('2d');
+            chartChuva = new Chart(ctxChuva, {
+                type: 'scatter',
+                data: { labels: [], datasets: [{ label: 'Talhões', data: [], backgroundColor: 'rgba(255, 99, 132, 0.6)', borderColor: 'rgba(255, 99, 132, 1)', borderWidth: 2 }] },
+                options: { responsive: true, scales: { x: { title: { display: true, text: 'Chuva (mm)' }, beginAtZero: false, min: 1100 }, y: { title: { display: true, text: 'Produtividade (t/ha)' }, beginAtZero: false, min: 70 } } }
+            });
+            const ctxVar = document.getElementById('chartVariedade').getContext('2d');
+            chartVariedade = new Chart(ctxVar, {
+                type: 'doughnut',
+                data: { labels: [], datasets: [{ data: [], backgroundColor: ['rgba(76, 175, 80, 0.8)', 'rgba(33, 150, 243, 0.8)', 'rgba(255, 152, 0, 0.8)'], borderColor: ['rgba(76, 175, 80, 1)', 'rgba(33, 150, 243, 1)', 'rgba(255, 152, 0, 1)'], borderWidth: 2 }] },
+                options: { responsive: true }
+            });
+        }
+        function atualizarGraficos() {
+            chartProdutividade.data.labels = dadosFiltrados.map(d => d.talhao);
+            chartProdutividade.data.datasets[0].data = dadosFiltrados.map(d => d.produtividade);
+            chartProdutividade.update();
+            const atrPorVariedade = {};
+            dadosFiltrados.forEach(d => { if (!atrPorVariedade[d.variedade]) { atrPorVariedade[d.variedade] = []; } atrPorVariedade[d.variedade].push(d.atr); });
+            const variedades = Object.keys(atrPorVariedade);
+            const mediaATR = variedades.map(v => atrPorVariedade[v].reduce((a, b) => a + b, 0) / atrPorVariedade[v].length);
+            chartATR.data.labels = variedades;
+            chartATR.data.datasets[0].data = mediaATR;
+            chartATR.update();
+            chartChuva.data.labels = dadosFiltrados.map(d => d.talhao);
+            chartChuva.data.datasets[0].data = dadosFiltrados.map(d => ({ x: d.chuva, y: d.produtividade }));
+            chartChuva.update();
+            const areaPorVariedade = {};
+            dadosFiltrados.forEach(d => { areaPorVariedade[d.variedade] = (areaPorVariedade[d.variedade] || 0) + d.area; });
+            chartVariedade.data.labels = Object.keys(areaPorVariedade);
+            chartVariedade.data.datasets[0].data = Object.values(areaPorVariedade);
+            chartVariedade.update();
+        }
+        function atualizarTabela() {
+            const tbody = document.getElementById('tabelaBody');
+            tbody.innerHTML = '';
+            dadosFiltrados.forEach(d => {
+                const row = tbody.insertRow();
+                row.innerHTML = '<td><span class="highlight">' + d.talhao + '</span></td><td>' + d.variedade + '</td><td>' + d.area + '</td><td>' + d.produtividade + '</td><td>' + d.chuva + '</td><td>' + d.atr + '</td><td>' + d.data + '</td>';
+            });
+        }
+    </script>
+</body>
+</html>
