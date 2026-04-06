@@ -23,7 +23,7 @@ Auxiliar produtores e gestores na tomada de decisão com base em:
 Abra o arquivo `index.html` em qualquer navegador (Chrome, Edge, etc.)
 
 ## 👤 Autor
-Andre Matheus - Estudante de Engenharia Agronômica | Uninter  
+Andre Mathews - Estudante de Engenharia Agronômica | Uninter  
 🔗 linkedin.com/in/andre-mathews-b182383a8
 
 ---
